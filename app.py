@@ -6,6 +6,7 @@ A Flask-based web app for classifying plastic waste images using machine learnin
 import os
 import sys
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from PIL import Image
 import numpy as np
@@ -19,6 +20,13 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
+
+# Enable CORS for frontend communication
+try:
+    from flask_cors import CORS
+    CORS(app, resources={r"/api/*": {"origins": "*"}, r"/classify": {"origins": "*"}})
+except ImportError:
+    pass
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
@@ -150,10 +158,13 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
-    # Development configuration
+    # Development vs Production configuration
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_ENV') == 'development'
+    
     app.run(
-        host='127.0.0.1',
-        port=5000,
-        debug=True,
-        use_reloader=True
+        host='0.0.0.0',
+        port=port,
+        debug=debug,
+        use_reloader=debug
     )

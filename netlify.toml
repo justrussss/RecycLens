@@ -1,0 +1,36 @@
+[build]
+  # No build command needed for static files
+  command = "echo 'Frontend ready'"
+  # Publish the static directory
+  publish = "static"
+
+# Redirect all API calls to the backend
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Catch-all for SPA (Single Page Application)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment-specific settings
+
+[context.production]
+  environment = { API_URL = "https://your-railway-backend.up.railway.app" }
+
+[context.deploy-preview]
+  environment = { API_URL = "https://your-railway-backend.up.railway.app" }
+
+[context.branch-deploy]
+  environment = { API_URL = "https://your-railway-backend.up.railway.app" }
+
+# Headers for security and CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    X-XSS-Protection = "1; mode=block"
