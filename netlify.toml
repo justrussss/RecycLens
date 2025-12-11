@@ -1,19 +1,37 @@
 [build]
   # No build command needed for static files
   command = "echo 'Frontend ready'"
-  # Publish the static directory
-  publish = "static"
+  # Publish from root
+  publish = "."
 
-# Redirect all API calls to the backend
+# Ignore backend files during deployment
+ignore = "git diff --quiet HEAD^ HEAD -- app.py config.py models/ Procfile requirements.txt"
+
+# Redirect API calls to backend
+[[redirects]]
+  from = "/classify"
+  to = ":splat"
+  status = 200
+
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to = ":splat"
+  status = 200
+
+[[redirects]]
+  from = "/health"
+  to = ":splat"
+  status = 200
+
+[[redirects]]
+  from = "/about"
+  to = "/templates/about.html"
   status = 200
 
 # Catch-all for SPA (Single Page Application)
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/templates/index.html"
   status = 200
 
 # Environment-specific settings
@@ -34,3 +52,4 @@
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "SAMEORIGIN"
     X-XSS-Protection = "1; mode=block"
+    Access-Control-Allow-Origin = "*"
