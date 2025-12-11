@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecycLens - Plastic Waste Classification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <i class="fas fa-recycle"></i> RecycLens
+            </div>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="navLinks">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1>RecycLens</h1>
+            <p>AI-Powered Plastic Waste Classification</p>
+            <p class="subtitle">Identify plastic types instantly and learn about their environmental impact</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="upload-section">
+            <h2>Upload a Plastic Image</h2>
+            <p class="section-description">Take a photo of plastic waste or upload an existing image. Our AI will identify the plastic type and provide recycling information.</p>
+            
+            <!-- Tabs for Upload Methods -->
+            <div class="upload-tabs">
+                <button class="tab-btn active" data-tab="file-upload">
+                    <i class="fas fa-file-upload"></i> File Upload
+                </button>
+                <button class="tab-btn" data-tab="camera-capture">
+                    <i class="fas fa-camera"></i> Camera
+                </button>
+            </div>
+
+            <!-- File Upload Tab -->
+            <div class="tab-content active" id="file-upload">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drag & Drop Your Image Here</h3>
+                    <p>or <label for="fileInput" class="link">click to select a file</label></p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    <p class="file-info">Supported formats: PNG, JPG, JPEG, GIF, BMP (Max 16MB)</p>
+                </div>
+            </div>
+
+            <!-- Camera Capture Tab -->
+            <div class="tab-content" id="camera-capture">
+                <div class="camera-container">
+                    <div class="camera-preview" id="cameraPreviewContainer" style="display: none;">
+                        <video id="cameraVideo" autoplay playsinline></video>
+                        <div class="camera-controls">
+                            <button id="captureBtn" class="btn btn-primary">
+                                <i class="fas fa-camera"></i> Capture Photo
+                            </button>
+                            <button id="stopCameraBtn" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Stop Camera
+                            </button>
+                        </div>
+                    </div>
+                    <button id="startCameraBtn" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-camera"></i> Start Camera
+                    </button>
+                </div>
+                <canvas id="captureCanvas" style="display: none;"></canvas>
+            </div>
+
+            <button id="classifyBtn" class="btn btn-primary" disabled style="margin-top: 1.5rem;">
+                <i class="fas fa-magic"></i> Classify Image
+            </button>
+        </section>
+
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <h2>Classification Results</h2>
+            
+            <div class="results-container">
+                <!-- Image Preview -->
+                <div class="preview-container">
+                    <h3>Uploaded Image</h3>
+                    <img id="previewImage" src="" alt="Preview">
+                </div>
+
+                <!-- Classification Results -->
+                <div class="results-container-right">
+                    <!-- Plastic Type Card -->
+                    <div class="result-card plastic-type-card">
+                        <h3>Plastic Type</h3>
+                        <div class="plastic-type-display">
+                            <div class="plastic-code" id="plasticCode"></div>
+                            <div class="plastic-name" id="plasticName"></div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="confidenceFill"></div>
+                            </div>
+                            <p class="confidence-text" id="confidenceText"></p>
+                        </div>
+                    </div>
+
+                    <!-- Description Card -->
+                    <div class="result-card">
+                        <h3><i class="fas fa-info-circle"></i> Description</h3>
+                        <p id="description"></p>
+                    </div>
+
+                    <!-- Recyclability Card -->
+                    <div class="result-card">
+                        <h3><i class="fas fa-check-circle"></i> Recyclability</h3>
+                        <div class="recyclability" id="recyclability"></div>
+                    </div>
+
+                    <!-- Environmental Impact Card -->
+                    <div class="result-card impact-card">
+                        <h3><i class="fas fa-leaf"></i> Environmental Impact</h3>
+                        <p id="environmentalImpact"></p>
+                    </div>
+                </div>
+            </div>
+
+            <button id="resetBtn" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> Classify Another Image
+            </button>
+        </section>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="spinner" style="display: none;">
+            <div class="spinner-circle"></div>
+            <p>Analyzing image...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- Info Section -->
+        <section class="info-section">
+            <h2>Why Plastic Classification Matters</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <i class="fas fa-globe"></i>
+                    <h3>Reduce Landfill Waste</h3>
+                    <p>Proper sorting ensures plastics are recycled correctly, reducing the amount of waste in landfills and oceans.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-sync-alt"></i>
+                    <h3>Improve Efficiency</h3>
+                    <p>Automated classification reduces sorting errors, making recycling facilities more efficient and cost-effective.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-industry"></i>
+                    <h3>Enable Circular Economy</h3>
+                    <p>Better sorted plastics create higher quality recycled materials that can be reused to make new products.</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-tree"></i>
+                    <h3>Promote Sustainability</h3>
+                    <p>Advanced waste management practices support sustainable development and environmental protection goals.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 RecycLens. Powered by AI for Environmental Sustainability.</p>
+            <div class="social-links">
+                <a href="#" title="GitHub"><i class="fab fa-github"></i></a>
+                <a href="#" title="Twitter"><i class="fab fa-twitter"></i></a>
+                <a href="#" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Uploads Directory
+
+Uploaded images are stored here temporarily during classification.
+
+This directory is used by the Flask application to store images
+that users upload through the web interface.
+
+Note: This directory is included in .gitignore to avoid committing
+large image files to version control.
