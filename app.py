@@ -6,13 +6,12 @@ A Flask-based web app for classifying plastic waste images using machine learnin
 import os
 import sys
 from flask import Flask, render_template, request, jsonify
-from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from PIL import Image
 import numpy as np
 from datetime import datetime
 
-# Import the placeholder classifier (will be replaced with real model)
+# Import the classifier
 from models.classifier import PlasticClassifier
 
 # Flask App Configuration
@@ -31,8 +30,9 @@ except ImportError:
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Initialize the classifier
-classifier = PlasticClassifier()
+# Initialize the classifier (will load Keras model if available)
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'plastic_classifier_model.keras')
+classifier = PlasticClassifier(model_path=MODEL_PATH)
 
 
 def allowed_file(filename):
@@ -46,15 +46,14 @@ def preprocess_image(image_path, target_size=(224, 224)):
     
     Args:
         image_path: Path to the image file
-        target_size: Target size for resizing (default: 224x224 for typical CNN models)
+        target_size: Target size for resizing (default: 224x224 for MobileNetV2)
     
     Returns:
-        Preprocessed image array and original image for display
+        Preprocessed image array
     """
     try:
         # Open image
         img = Image.open(image_path).convert('RGB')
-        original_img = img.copy()
         
         # Resize image
         img = img.resize(target_size, Image.Resampling.LANCZOS)
@@ -62,7 +61,10 @@ def preprocess_image(image_path, target_size=(224, 224)):
         # Convert to numpy array and normalize
         img_array = np.array(img) / 255.0
         
-        return img_array, original_img
+        # Expand dimensions for batch processing
+        img_array = np.expand_dims(img_array, axis=0)
+        
+        return img_array
     except Exception as e:
         print(f"Error preprocessing image: {str(e)}")
         raise
@@ -102,11 +104,13 @@ def classify_image():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        # Preprocess image
-        img_array, original_img = preprocess_image(filepath)
-        
-        # Classify image
-        prediction = classifier.predict(img_array)
+        # Predict
+        try:
+            prediction = classifier.predict(filepath)
+        except Exception as e:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            return jsonify({'error': f'Classification failed: {str(e)}'}), 500
         
         # Prepare response
         response = {
@@ -114,6 +118,7 @@ def classify_image():
             'filename': filename,
             'filepath': f"/{filepath}",
             'prediction': prediction['class'],
+            'code': prediction['code'],
             'confidence': prediction['confidence'],
             'description': prediction['description'],
             'environmental_impact': prediction['environmental_impact'],
